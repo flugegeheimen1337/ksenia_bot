@@ -20,8 +20,8 @@ WELCOME = (
 )
 
 START_PHOTO = "photos/start.jpg"
-PASSPORT_COVER = "photos/passport-cover.png"
-SPREAD = "stamps/spread.png"
+PASSPORT_COVER = "photos/passport-cover.jpg"
+SPREAD = "stamps/spread.jpg"
 PERFORMER = "Петрозаводск за один день"
 
 STAMP = {
@@ -444,7 +444,7 @@ BEATS: tuple[Beat, ...] = (
                 "одним из самых запоминающихся на проспекте⭐️",
             ),
         ),
-        Reward(("stamps/03.png", "stamps/04.png"), STAMP[3]),
+        Reward(("stamps/03.jpg", "stamps/04.png"), STAMP[3]),
     ),
     _quiz(
         "p4",
@@ -554,7 +554,7 @@ BEATS: tuple[Beat, ...] = (
             ),
         ),
         Reward(
-            ("stamps/08.png",),
+            ("stamps/08.jpg",),
             STAMP[7],
             ("photos/p7-sport.jpg", "photos/p7-view.jpg", "photos/p7-stairs.jpg"),
             TRANSITION_AFTER_LIBRARY,

@@ -38,7 +38,7 @@ def test_scenario_files_and_answers() -> None:
     ]
     assert [beat.kind for beat in point3] == ["walk", "walk", "walk", "quiz"]
     assert point3[-1].reward is not None
-    assert point3[-1].reward.stamps == ("stamps/03.png", "stamps/04.png")
+    assert point3[-1].reward.stamps == ("stamps/03.jpg", "stamps/04.png")
 
     library = next(beat for beat in BEATS if beat.id == "p7")
     assert library.reward is not None
@@ -46,7 +46,18 @@ def test_scenario_files_and_answers() -> None:
     assert len(library.reward.photos) == 3
 
     stamps = [path for beat in quizzes if beat.reward for path in beat.reward.stamps]
-    assert stamps == [f"stamps/{number:02d}.png" for number in range(1, 11)]
+    assert stamps == [
+        "stamps/01.png",
+        "stamps/02.png",
+        "stamps/03.jpg",
+        "stamps/04.png",
+        "stamps/05.png",
+        "stamps/06.png",
+        "stamps/07.png",
+        "stamps/08.jpg",
+        "stamps/09.png",
+        "stamps/10.png",
+    ]
     assert BEATS[-1].kind == "final"
     assert "vLHBIAZT" in ROUTE_URL
     assert "10 штампов" in WELCOME
