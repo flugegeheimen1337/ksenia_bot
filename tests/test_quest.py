@@ -49,7 +49,10 @@ def test_scenario_files_and_answers() -> None:
     assert stamps == [f"stamps/{number:02d}.png" for number in range(1, 11)]
     assert BEATS[-1].kind == "final"
     assert "vLHBIAZT" in ROUTE_URL
-    assert "9 штампов" in WELCOME
+    assert "10 штампов" in WELCOME
+    post = next(beat for beat in BEATS if beat.id == "p3b")
+    assert "дом № 22" in post.intro
+    assert "Главпочтамт" in post.intro
 
 
 def test_every_media_file_is_used() -> None:

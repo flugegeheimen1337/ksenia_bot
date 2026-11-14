@@ -10,7 +10,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import FSInputFile, InputMediaPhoto
 
 from bot.config import MEDIA_DIR
-from bot.content import PERFORMER, SPREAD, SPREAD_CAPTION, START_PHOTO, WELCOME, Beat
+from bot.content import PASSPORT_COVER, PERFORMER, SPREAD, SPREAD_CAPTION, START_PHOTO, WELCOME, Beat
 from bot.db import Store
 from bot.keyboards import choices_kb, final_kb, next_kb, welcome_kb
 
@@ -29,7 +29,9 @@ class Presenter:
         return path
 
     async def show_welcome(self, chat_id: int) -> None:
-        await self._photo(chat_id, START_PHOTO, caption=WELCOME, reply_markup=welcome_kb())
+        # У альбома нельзя повесить кнопки, поэтому текст и кнопки идут сразу следом.
+        await self._album(chat_id, (START_PHOTO, PASSPORT_COVER))
+        await self.bot.send_message(chat_id, WELCOME, reply_markup=welcome_kb())
 
     async def show_beat(self, chat_id: int, beat: Beat, *, task_only: bool = False, preface: str | None = None) -> None:
         if preface:

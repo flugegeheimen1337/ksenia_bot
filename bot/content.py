@@ -16,10 +16,11 @@ WELCOME = (
     "Я буду твоим проводником по маршруту🤫\n"
     "У моего квеста есть фишка — Паспорт Путешественника… После каждой пройденной "
     "точки и правильного ответа в твоем виртуальном паспорте будет появляться "
-    "особенный штамп. В конце ты соберешь 9 штампов✨"
+    "особенный штамп. В конце ты соберешь 10 штампов✨"
 )
 
 START_PHOTO = "photos/start.jpg"
+PASSPORT_COVER = "photos/passport-cover.png"
 SPREAD = "stamps/spread.png"
 PERFORMER = "Петрозаводск за один день"
 
@@ -406,10 +407,11 @@ BEATS: tuple[Beat, ...] = (
     ),
     _walk(
         "p3b",
-        "Главпочтамт",
+        "Дом № 22 и Главпочтамт",
         ("photos/p3-post.jpg", "photos/p3-house.jpg"),
         "audio/p3-post.mp3",
-        "Главпочтамт.\nСлушайте аудио и смотрите по сторонам. Когда будете готовы — идём дальше.",
+        "Старинный дом № 22, 1952 год и Главпочтамт.\n"
+        "Слушайте аудио и смотрите по сторонам. Когда будете готовы — идём дальше.",
     ),
     _walk(
         "p3c",
@@ -623,7 +625,7 @@ BY_ID = {beat.id: index for index, beat in enumerate(BEATS)}
 
 
 def media_paths() -> tuple[str, ...]:
-    paths = [START_PHOTO, SPREAD]
+    paths = [START_PHOTO, PASSPORT_COVER, SPREAD]
     for beat in BEATS:
         paths.extend(beat.photos)
         if beat.audio:
