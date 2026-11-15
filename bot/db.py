@@ -30,10 +30,16 @@ class Store:
                     user_id INTEGER PRIMARY KEY,
                     status TEXT NOT NULL,
                     step INTEGER NOT NULL,
-                    updated_at TEXT NOT NULL
+                    updated_at TEXT NOT NULL,
+                    allowed INTEGER NOT NULL DEFAULT 0
                 )
                 """
             )
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
+            if "allowed" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN allowed INTEGER NOT NULL DEFAULT 0")
+                # Кто уже шёл по маршруту, остаётся в квесте. Новым нужна ссылка.
+                conn.execute("UPDATE users SET allowed = 1")
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS files (
@@ -47,6 +53,25 @@ class Store:
         conn = sqlite3.connect(self.path)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def is_allowed(self, user_id: int) -> bool:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT allowed FROM users WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()
+        return row is not None and int(row["allowed"]) == 1
+
+    def allow(self, user_id: int) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO users (user_id, status, step, updated_at, allowed)
+                VALUES (?, 'new', 0, ?, 1)
+                ON CONFLICT(user_id) DO UPDATE SET allowed = 1
+                """,
+                (user_id, _now()),
+            )
 
     def ensure(self, user_id: int) -> Progress:
         with self._conn() as conn:

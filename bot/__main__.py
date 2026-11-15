@@ -8,6 +8,7 @@ import sys
 
 from aiogram import Bot, Dispatcher
 
+from bot.access import access_code
 from bot.config import DATA_DIR, token
 from bot.content import BEATS, validate
 from bot.db import Store
@@ -22,6 +23,7 @@ logger = logging.getLogger("kvest")
 
 async def run() -> None:
     validate()
+    access_code()
     bot = Bot(token())
     store = Store(DATA_DIR / "bot.sqlite")
     setup(bot, store)

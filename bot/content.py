@@ -11,6 +11,11 @@ from dataclasses import dataclass
 ROUTE_URL = "https://yandex.ru/maps/?bookmarks%5BpublicId%5D=vLHBIAZT"
 ROUTE_TEXT = "Маршрут квеста на Яндекс Картах:\n" + ROUTE_URL
 
+LOCKED_TEXT = (
+    "Этот квест открывается по персональной ссылке. "
+    "Попросите её у организатора маршрута."
+)
+
 WELCOME = (
     "Привет!🌟Ты попал в мой авторский квест Петрозаводск за один день! "
     "Я буду твоим проводником по маршруту🤫\n"

@@ -5,13 +5,14 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from aiogram import Bot, F, Router
+from aiogram import BaseMiddleware, Bot, F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import CallbackQuery, Message, TelegramObject
 
+from bot.access import link_grants
 from bot.certificate import traveler_name
-from bot.content import BEATS, BY_ID, ROUTE_TEXT
+from bot.content import BEATS, BY_ID, LOCKED_TEXT, ROUTE_TEXT
 from bot.db import Store
 from bot.keyboards import done_kb, route_kb
 from bot.present import Presenter
@@ -29,10 +30,30 @@ def _lock(user_id: int) -> asyncio.Lock:
     return _locks.setdefault(user_id, asyncio.Lock())
 
 
+class _AccessGate(BaseMiddleware):
+    """Любая команда, кроме входа по ссылке, только для уже допущенных."""
+
+    async def __call__(self, handler, event: TelegramObject, data: dict):
+        if isinstance(event, Message) and _is_start(event):
+            return await handler(event, data)
+        user = data.get("event_from_user")
+        if user is not None and _store().is_allowed(user.id):
+            return await handler(event, data)
+        if isinstance(event, CallbackQuery):
+            await _quiet(event, "Квест открывается по ссылке")
+            return None
+        if isinstance(event, Message):
+            await event.answer(LOCKED_TEXT)
+        return None
+
+
 def setup(bot: Bot, store: Store) -> Router:
     router.bot = bot  # type: ignore[attr-defined]
     router.store = store  # type: ignore[attr-defined]
     router.presenter = Presenter(bot, store)  # type: ignore[attr-defined]
+    gate = _AccessGate()
+    router.message.middleware(gate)
+    router.callback_query.middleware(gate)
     return router
 
 
@@ -66,9 +87,24 @@ def _chat(callback: CallbackQuery) -> int:
     return callback.from_user.id
 
 
+def _is_start(message: Message) -> bool:
+    text = message.text or message.caption or ""
+    head = text.split(maxsplit=1)[0] if text else ""
+    return head.split("@", 1)[0] == "/start"
+
+
 @router.message(CommandStart())
-async def on_start(message: Message) -> None:
-    _store().ensure(message.from_user.id)
+async def on_start(message: Message, command: CommandObject) -> None:
+    if message.from_user is None:
+        return
+    store = _store()
+    user_id = message.from_user.id
+    if link_grants(command.args):
+        store.allow(user_id)
+    elif not store.is_allowed(user_id):
+        await message.answer(LOCKED_TEXT)
+        return
+    store.ensure(user_id)
     await _presenter().show_welcome(message.chat.id)
 
 

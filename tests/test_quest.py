@@ -156,6 +156,47 @@ def test_progress_survives_wrong_answers_and_restart(tmp_path: Path) -> None:
     assert store.try_begin(user_id) == "begin"
 
 
+def test_quest_opens_only_with_the_link(tmp_path: Path) -> None:
+    import sqlite3
+
+    from bot.access import link_grants
+
+    assert link_grants("right-code", "right-code")
+    assert not link_grants("wrong-code", "right-code")
+    assert not link_grants("", "right-code")
+    assert not link_grants(None, "right-code")
+    assert not link_grants("right-code-extra", "right-code")
+
+    legacy = tmp_path / "legacy.sqlite"
+    with sqlite3.connect(legacy) as conn:
+        conn.execute(
+            """
+            CREATE TABLE users (
+                user_id INTEGER PRIMARY KEY,
+                status TEXT NOT NULL,
+                step INTEGER NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO users VALUES (1, 'active', 3, '2026-01-01T00:00:00+00:00')"
+        )
+
+    store = Store(legacy)
+    assert store.is_allowed(1)
+    assert not store.is_allowed(2)
+    store.allow(2)
+    assert store.is_allowed(2)
+    store.reset(2)
+    assert store.is_allowed(2)
+
+    fresh = Store(tmp_path / "fresh.sqlite")
+    assert not fresh.is_allowed(5)
+    fresh.ensure(5)
+    assert not fresh.is_allowed(5)
+
+
 def test_file_id_cache(tmp_path: Path) -> None:
     store = Store(tmp_path / "bot.sqlite")
     assert store.get_file_id("audio/p1-hotel.mp3") is None
