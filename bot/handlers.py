@@ -10,6 +10,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
+from bot.certificate import traveler_name
 from bot.content import BEATS, BY_ID, ROUTE_TEXT
 from bot.db import Store
 from bot.keyboards import done_kb, route_kb
@@ -133,7 +134,7 @@ async def on_passport(callback: CallbackQuery) -> None:
         await _quiet(callback, "Паспорт соберётся в финале, когда будут все штампы")
         return
     await _quiet(callback)
-    await _presenter().show_passport(_chat(callback))
+    await _presenter().show_passport(_chat(callback), traveler_name(callback.from_user))
 
 
 @router.callback_query(F.data.startswith("n:"))
@@ -175,7 +176,12 @@ async def _deliver(callback: CallbackQuery, beat_index: int, preface: str | None
         return
     beat = BEATS[beat_index]
     try:
-        await _presenter().show_beat(_chat(callback), beat, preface=preface)
+        await _presenter().show_beat(
+            _chat(callback),
+            beat,
+            preface=preface,
+            name=traveler_name(callback.from_user),
+        )
     except Exception:
         logger.exception("не открылся шаг %s", beat.id)
         await callback.bot.send_message(

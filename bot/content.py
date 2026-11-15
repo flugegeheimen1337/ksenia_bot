@@ -22,6 +22,8 @@ WELCOME = (
 START_PHOTO = "photos/start.jpg"
 PASSPORT_COVER = "photos/passport-cover.jpg"
 SPREAD = "stamps/spread.jpg"
+CERTIFICATE = "photos/certificate.jpg"
+CERTIFICATE_CAPTION = "Твой сертификат."
 PERFORMER = "Петрозаводск за один день"
 
 STAMP = {
@@ -625,7 +627,7 @@ BY_ID = {beat.id: index for index, beat in enumerate(BEATS)}
 
 
 def media_paths() -> tuple[str, ...]:
-    paths = [START_PHOTO, PASSPORT_COVER, SPREAD]
+    paths = [START_PHOTO, PASSPORT_COVER, SPREAD, CERTIFICATE]
     for beat in BEATS:
         paths.extend(beat.photos)
         if beat.audio:

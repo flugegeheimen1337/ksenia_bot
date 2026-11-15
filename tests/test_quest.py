@@ -66,6 +66,46 @@ def test_scenario_files_and_answers() -> None:
     assert "Главпочтамт" in post.intro
 
 
+def test_certificate_writes_the_name_into_the_blank() -> None:
+    from PIL import Image
+
+    from bot.certificate import NAME_BOX, render_certificate, traveler_name
+
+    class User:
+        def __init__(self, first_name, last_name=None, username=None):
+            self.first_name = first_name
+            self.last_name = last_name
+            self.username = username
+
+    assert traveler_name(User("Мария", "Соколова")) == "Мария Соколова"
+    assert traveler_name(User("", username="guest")) == "guest"
+    assert traveler_name(None) == "Путешественник"
+
+    blank = Image.open(MEDIA_DIR / "photos/certificate.jpg").convert("RGB")
+    named = render_certificate("Мария Соколова")
+    long = render_certificate("Александр Константинович Вяземский")
+    assert named.size == blank.size == (1280, 853)
+    left, top, right, bottom = NAME_BOX
+    assert _changed_pixels(blank, named, NAME_BOX) > 400
+    assert _changed_pixels(blank, long, NAME_BOX) > 400
+    # Надпись «9 точек квеста» под плашкой остаётся как на шаблоне.
+    assert named.getpixel((640, 520)) == blank.getpixel((640, 520))
+    for image in (named, long):
+        for x in range(left, right, 12):
+            assert image.getpixel((x, 340)) == blank.getpixel((x, 340))
+            assert image.getpixel((x, 470)) == blank.getpixel((x, 470))
+
+
+def _changed_pixels(before, after, box) -> int:
+    left, top, right, bottom = box
+    changed = 0
+    for y in range(top, bottom, 2):
+        for x in range(left, right, 2):
+            if before.getpixel((x, y)) != after.getpixel((x, y)):
+                changed += 1
+    return changed
+
+
 def test_every_media_file_is_used() -> None:
     from bot.content import media_paths
 

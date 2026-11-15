@@ -3,14 +3,25 @@
 from __future__ import annotations
 
 import logging
+from io import BytesIO
 from pathlib import Path
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import FSInputFile, InputMediaPhoto
+from aiogram.types import BufferedInputFile, FSInputFile, InputMediaPhoto
 
+from bot.certificate import render_certificate
 from bot.config import MEDIA_DIR
-from bot.content import PASSPORT_COVER, PERFORMER, SPREAD, SPREAD_CAPTION, START_PHOTO, WELCOME, Beat
+from bot.content import (
+    CERTIFICATE_CAPTION,
+    PASSPORT_COVER,
+    PERFORMER,
+    SPREAD,
+    SPREAD_CAPTION,
+    START_PHOTO,
+    WELCOME,
+    Beat,
+)
 from bot.db import Store
 from bot.keyboards import choices_kb, final_kb, next_kb, welcome_kb
 
@@ -33,11 +44,19 @@ class Presenter:
         await self._album(chat_id, (START_PHOTO, PASSPORT_COVER))
         await self.bot.send_message(chat_id, WELCOME, reply_markup=welcome_kb())
 
-    async def show_beat(self, chat_id: int, beat: Beat, *, task_only: bool = False, preface: str | None = None) -> None:
+    async def show_beat(
+        self,
+        chat_id: int,
+        beat: Beat,
+        *,
+        task_only: bool = False,
+        preface: str | None = None,
+        name: str | None = None,
+    ) -> None:
         if preface:
             await self.bot.send_message(chat_id, preface)
         if beat.kind == "final":
-            await self.show_final(chat_id)
+            await self.show_final(chat_id, name or "Путешественник")
             return
         if not task_only:
             if beat.audio:
@@ -62,7 +81,7 @@ class Presenter:
         if reward.note:
             await self.bot.send_message(chat_id, reward.note)
 
-    async def show_final(self, chat_id: int) -> None:
+    async def show_final(self, chat_id: int, name: str) -> None:
         from bot.content import BEATS
 
         final = BEATS[-1]
@@ -70,10 +89,23 @@ class Presenter:
             await self._audio(chat_id, final.audio, final.audio_title)
         await self._photos(chat_id, final.photos)
         await self.bot.send_message(chat_id, final.intro)
-        await self._photo(chat_id, SPREAD, caption=SPREAD_CAPTION, reply_markup=final_kb())
+        await self._photo(chat_id, SPREAD, caption=SPREAD_CAPTION)
+        await self._certificate(chat_id, name, reply_markup=final_kb())
 
-    async def show_passport(self, chat_id: int) -> None:
-        await self._photo(chat_id, SPREAD, caption=SPREAD_CAPTION, reply_markup=final_kb())
+    async def show_passport(self, chat_id: int, name: str) -> None:
+        await self._photo(chat_id, SPREAD, caption=SPREAD_CAPTION)
+        await self._certificate(chat_id, name, reply_markup=final_kb())
+
+    async def _certificate(self, chat_id: int, name: str, reply_markup=None) -> None:
+        # Имя у каждого своё, поэтому file_id шаблона не кэшируем.
+        buffer = BytesIO()
+        render_certificate(name).save(buffer, format="JPEG", quality=90)
+        await self.bot.send_photo(
+            chat_id,
+            BufferedInputFile(buffer.getvalue(), filename="certificate.jpg"),
+            caption=CERTIFICATE_CAPTION,
+            reply_markup=reply_markup,
+        )
 
     async def _photos(self, chat_id: int, relative_paths: tuple[str, ...], caption: str | None = None) -> None:
         if not relative_paths:
